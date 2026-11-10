@@ -6,6 +6,10 @@ updates:
     schedule: { interval: weekly }
     groups:
       python-deps: { patterns: ["*"] }
+    ignore:
+      # mcp 2.x renamed FastMCP and changed APIs: migrate by hand, not via a bump PR
+      - dependency-name: mcp
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
