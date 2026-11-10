@@ -51,6 +51,19 @@ curl http://localhost:8000/health
 
 The first transcription downloads the Whisper model (~1.6 GB for turbo) into the `transcript-data` volume.
 
+### Your API token
+
+Every install has its own secret token, so only you (and the agents you give it to) can use your server:
+
+- **Create it** once, as above: `echo "API_TOKEN=$(openssl rand -hex 24)" > .env`. Compose refuses to start without one.
+- **Use it** everywhere as the header `Authorization: Bearer <API_TOKEN>`: REST calls, and the MCP config of each agent (examples below).
+- **Read it back** later: `grep API_TOKEN .env`.
+- **Change it** (e.g. if it leaked): put a new value in `.env`, run `docker compose up -d`, and update your agents. Old download links stop working too.
+- **Keep it out of git and chats.** Agents such as OpenClaw can read it from an environment variable instead of storing it in their config.
+
+`/health` is the only endpoint that works without the token. Download links from `get_transcript_file` carry their own
+24-hour signature instead, so you can share a single file without sharing the token.
+
 <details>
 <summary>Plain <code>docker run</code> instead</summary>
 
