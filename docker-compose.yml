@@ -13,6 +13,7 @@ services:
       # MAX_DURATION_SECONDS: "14400"
       # IDLE_UNLOAD_SECONDS: "600"
       # PUBLIC_BASE_URL: https://transcripts.example.com
+      # TZ: Europe/Berlin       # time zone for the "Transcribed" date in files
     volumes:
       - transcript-data:/data
     # Whisper uses every thread it gets; keep other services responsive while it works
