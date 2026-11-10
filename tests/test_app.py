@@ -133,14 +133,14 @@ def test_mcp_endpoint_needs_token(client):
 def test_tools_are_listed_with_annotations():
     tools = {t.name: t for t in asyncio.run(srv.mcp.list_tools())}
     assert set(tools) == {"transcribe_url", "get_transcript", "list_transcripts", "get_transcript_file"}
-    assert tools["get_transcript"].annotations.readOnlyHint is True
-    assert tools["transcribe_url"].annotations.destructiveHint is False
+    assert tools["get_transcript"].annotations.read_only_hint is True
+    assert tools["transcribe_url"].annotations.destructive_hint is False
 
 
 def _call(name, args):
     result = asyncio.run(srv.mcp.call_tool(name, args))
-    blocks = result[0] if isinstance(result, tuple) else result
-    return blocks
+    assert not result.is_error, result.content
+    return result.content
 
 
 def test_get_transcript_and_file_tools():
@@ -167,3 +167,8 @@ def test_list_transcripts_tool():
 def test_jobs_are_json_on_disk():
     job = done_job()
     assert json.loads(srv._path(job["id"]).read_text())["id"] == job["id"]
+
+
+def test_server_identity():
+    assert asyncio.run(srv.mcp.list_tools())  # tools register on the 2.x MCPServer
+    assert srv.mcp.name == "social-whisper-transcript"

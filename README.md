@@ -237,7 +237,7 @@ pytest                       # no network, model or ffmpeg needed
 docker build -t social-whisper-transcript-mcp .
 ```
 
-Everything lives in [`app.py`](app.py): FastAPI + the official MCP Python SDK (FastMCP), one worker thread, jobs stored as JSON in `/data/jobs`.
+Everything lives in [`app.py`](app.py): FastAPI + the official MCP Python SDK 2.x (`MCPServer`), one worker thread, jobs stored as JSON in `/data/jobs`.
 
 ## Legal
 
