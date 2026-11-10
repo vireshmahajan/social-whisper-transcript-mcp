@@ -1,0 +1,10 @@
+.git
+.github
+tests
+skills
+*.md
+.env
+.env.*
+__pycache__
+.pytest_cache
+data

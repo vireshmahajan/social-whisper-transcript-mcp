@@ -1,0 +1,22 @@
+services:
+  transcript:
+    image: ghcr.io/vireshmahajan/social-whisper-transcript-mcp:latest
+    # build: .            # or build it yourself from this folder
+    container_name: social-whisper-transcript
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-8000}:8000"
+    environment:
+      API_TOKEN: ${API_TOKEN:?Set API_TOKEN in .env (openssl rand -hex 24)}
+      WHISPER_MODEL: ${WHISPER_MODEL:-large-v3-turbo}
+      # WHISPER_THREADS: "8"
+      # MAX_DURATION_SECONDS: "14400"
+      # IDLE_UNLOAD_SECONDS: "600"
+      # PUBLIC_BASE_URL: https://transcripts.example.com
+    volumes:
+      - transcript-data:/data
+    # Whisper uses every thread it gets; keep other services responsive while it works
+    cpu_shares: 512
+
+volumes:
+  transcript-data:

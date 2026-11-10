@@ -1,0 +1,5 @@
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30
+faster-whisper>=1.1,<2
+yt-dlp[default]
+mcp>=1.12,<2
