@@ -41,7 +41,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from pydantic import BaseModel, Field, HttpUrl
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 DATA = Path(os.environ.get("DATA_DIR", "/data"))
 JOBS_DIR = DATA / "jobs"
@@ -393,19 +393,14 @@ def transcript(job_id: str, format: Literal["txt", "srt", "vtt", "json"] = "txt"
 
 
 # ---------------------------------------------------------------- MCP (for agents)
-from mcp.server.fastmcp import Context, FastMCP  # noqa: E402
+from mcp.server.mcpserver import Context, MCPServer  # noqa: E402  (MCP Python SDK 2.x)
+from mcp.server.transport_security import TransportSecuritySettings  # noqa: E402
 from mcp.types import EmbeddedResource, TextContent, TextResourceContents, ToolAnnotations  # noqa: E402
 from starlette.routing import Route  # noqa: E402
 
-try:
-    from mcp.server.transport_security import TransportSecuritySettings  # noqa: E402
-
-    _security = {"transport_security": TransportSecuritySettings(enable_dns_rebinding_protection=False)}
-except ImportError:  # older SDK: no host check to disable
-    _security = {}
-
-mcp = FastMCP(
+mcp = MCPServer(
     "social-whisper-transcript",
+    version=__version__,
     instructions=(
         "Transcribes speech in online videos and audio (YouTube, Instagram, TikTok, X, Facebook, Vimeo, "
         "podcasts and ~1800 other sites) with Whisper on a self-hosted server. Call transcribe_url with a "
@@ -417,8 +412,6 @@ mcp = FastMCP(
         "as a file (txt, md, srt, vtt, json), call get_transcript_file: it returns the file and a "
         "download link that works without a token for 24 hours."
     ),
-    stateless_http=True,
-    **_security,
 )
 _READS = ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False)
 Output = Literal["text", "timestamped", "srt"]
@@ -704,7 +697,7 @@ async def get_transcript_file(job_id: str, format: FileFormat = "txt", wait_seco
                        "in pages with get_transcript(offset=...).")
     return [TextContent(type="text", text=note),
             EmbeddedResource(type="resource", resource=TextResourceContents(
-                uri=f"transcript://{job['id']}/{quote(name)}", mimeType=MIME[format].split(";")[0], text=body))]
+                uri=f"transcript://{job['id']}/{quote(name)}", mime_type=MIME[format].split(";")[0], text=body))]
 
 
 class BearerAuth:
@@ -723,7 +716,11 @@ class BearerAuth:
         await self.inner(scope, receive, send)
 
 
-mcp.streamable_http_app()  # creates mcp.session_manager (run in lifespan above)
+# Creates mcp.session_manager (run in the lifespan above). Stateless: every request stands alone, so agents
+# need no session handling. DNS-rebinding protection is off so LAN / Tailscale host names work; the bearer
+# token (BearerAuth below) is the guard.
+mcp.streamable_http_app(stateless_http=True,
+                        transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False))
 
 
 async def _mcp_asgi(scope, receive, send):
